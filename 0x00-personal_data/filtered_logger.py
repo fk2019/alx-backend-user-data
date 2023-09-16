@@ -2,6 +2,8 @@
 """Personal data methods"""
 from typing import List
 import logging
+import mysql.connector
+import os
 import re
 
 PII_FIELDS = ('name', 'email', 'phone', 'ssn', 'password')
@@ -48,3 +50,24 @@ def get_logger() -> logging.Logger:
     stream_handler.setFormatter(formatter)
     logger.addHandler(stream_handler)
     return logger
+
+
+def get_db() -> mysql.connector.connection.MySQLConnection:
+    """Returns a connector to the db"""
+    db_host = os.environ.get('PERSONAL_DATA_DB_HOST')
+    db_user = os.environ.get('PERSONAL_DATA_DB_USERNAME')
+    db_pass = os.environ.get('PERSONAL_DATA_DB_PASSWORD')
+    db = os.environ.get('PERSONAL_DATA_DB_NAME')
+    if not (db_host and db_user and db_pass and db):
+        raise ValueError('Database credentials not found')
+    try:
+        conn = mysql.connector.connect(
+            host=db_host,
+            user=db_user,
+            password=db_pass,
+            database=db
+        )
+        return conn
+    except mysql.connector.Error as err:
+        print('Error: {}', err)
+        return None
