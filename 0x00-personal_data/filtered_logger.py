@@ -43,9 +43,9 @@ class RedactingFormatter(logging.Formatter):
 def get_logger() -> logging.Logger:
     """Return a Logger object"""
     logger = logging.getLogger("user_data")
-    logger.setLevel(lgging.INFO)
+    logger.setLevel(logging.INFO)
     logger.propagate = False
-    stream_handler = logging.streamHandler()
+    stream_handler = logging.StreamHandler()
     formatter = RedactingFormatter(PII_FIELDS)
     stream_handler.setFormatter(formatter)
     logger.addHandler(stream_handler)
@@ -54,9 +54,9 @@ def get_logger() -> logging.Logger:
 
 def get_db() -> mysql.connector.connection.MySQLConnection:
     """Returns a connector to the db"""
-    db_host = os.environ.get('PERSONAL_DATA_DB_HOST')
-    db_user = os.environ.get('PERSONAL_DATA_DB_USERNAME')
-    db_pass = os.environ.get('PERSONAL_DATA_DB_PASSWORD')
+    db_host = os.environ.get('PERSONAL_DATA_DB_HOST', 'localhost')
+    db_user = os.environ.get('PERSONAL_DATA_DB_USERNAME', 'root')
+    db_pass = os.environ.get('PERSONAL_DATA_DB_PASSWORD', '')
     db = os.environ.get('PERSONAL_DATA_DB_NAME')
     if not (db_host and db_user and db_pass and db):
         raise ValueError('Database credentials not found')
@@ -71,3 +71,23 @@ def get_db() -> mysql.connector.connection.MySQLConnection:
     except mysql.connector.Error as err:
         print('Error: {}', err)
         return None
+
+
+def main() -> None:
+    """main function"""
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute('SELECT * FROM users')
+    logger = get_logger()
+    fld_a = 'name={}; email={}; phone={}; ssn={}; password={}; ip={};'
+    fld_b = 'last_login={}; user_agent={};'
+    for row in cursor:
+        fields = (fld_a + fld_b).format(row[0], row[1], row[2], row[3],
+                                        row[4], row[5], row[6], row[7])
+        logger.info(fields)
+    cursor.close()
+    db.close()
+
+
+if __name__ == "__main__":
+    main()
