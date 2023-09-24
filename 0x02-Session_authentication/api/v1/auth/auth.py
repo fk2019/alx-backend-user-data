@@ -11,6 +11,8 @@ class Auth:
         """Return False if path present in excluded paths else True"""
         if path is None or excluded_paths == []:
             return True
+        if (path + '/') in excluded_paths:
+            return False
         for ex_path in excluded_paths:
             if ex_path in {path, path + '/'}:
                 return False
