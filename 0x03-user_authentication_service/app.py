@@ -31,7 +31,7 @@ def new_user() -> str:
             return jsonify({
                 "email": new_user.email,
                 "message": "user created"
-            })
+            }), 200
     except ValueRrror:
         return jsonify({
             "message": "email already registered"
