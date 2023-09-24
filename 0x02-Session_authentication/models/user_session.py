@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 """Database for storing session ids"""
 from models.base import Base
 
