@@ -48,3 +48,14 @@ class DB:
             return user
         except InvalidRequestError as e:
             raise InvalidRequestError("Invalid query arguments: " + str(e))
+
+    def update_user(self, user_id: int, **kwargs) -> None:
+        """Find user record and update attributes"""
+        user_record = self.find_user_by(id=user_id)
+        for key, value in kwargs.items():
+            if hasattr(user_record, key):
+                setattr(user_record, key, value)
+            else:
+                raise ValueError
+        self._session.commit()
+        return None
