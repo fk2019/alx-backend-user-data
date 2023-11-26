@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-""" Filter datum
+""" Fillter datum
 """
 import re
 import os
@@ -13,7 +13,7 @@ PII_FIELDS = ("name", "email", "phone", "ssn", "password")
 
 def filter_datum(fields: List[str], redaction: str, message: str,
                  separator: str) -> str:
-    """Filter datta"""
+    """filter datum"""
     for entry in fields:
         message = re.sub(rf"{entry}=(.*?)\{separator}",
                          f'{entry}={redaction}{separator}', message)
@@ -21,19 +21,19 @@ def filter_datum(fields: List[str], redaction: str, message: str,
 
 
 class RedactingFormatter(logging.Formatter):
-    """ Redacting Formatter class """
+    """ Redacting Formatter class"""
 
     REDACTION = "***"
     FORMAT = "[HOLBERTON] %(name)s %(levelname)s %(asctime)-15s: %(message)s"
     SEPARATOR = ";"
 
     def __init__(self, fields: List[str]):
-        """ Initiliaze class """
+        """ Init """
         self.fields = fields
         super(RedactingFormatter, self).__init__(self.FORMAT)
 
     def format(self, record: logging.LogRecord) -> str:
-        """ Filter incoming logs values """
+        """ Filter values in incoming logs """
         return filter_datum(self.fields, self.REDACTION,
                             super().format(record), self.SEPARATOR)
 
@@ -50,8 +50,8 @@ def get_logger() -> logging.Logger:
 
 
 def get_db() -> mysql.connector.connection.MySQLConnection:
-    """ Implement db conectivity"""
-    pass = os.environ.get("PERSONAL_DATA_DB_PASSWORD", "")
+    """ db conectivity"""
+    psw = os.environ.get("PERSONAL_DATA_DB_PASSWORD", "")
     username = os.environ.get('PERSONAL_DATA_DB_USERNAME', "root")
     host = os.environ.get('PERSONAL_DATA_DB_HOST', 'localhost')
     db_name = os.environ.get('PERSONAL_DATA_DB_NAME')
@@ -59,7 +59,7 @@ def get_db() -> mysql.connector.connection.MySQLConnection:
         host=host,
         database=db_name,
         user=username,
-        password=pass)
+        password=psw)
     return conn
 
 
