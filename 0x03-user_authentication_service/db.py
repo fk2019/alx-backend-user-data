@@ -2,60 +2,58 @@
 """DB module
 """
 from sqlalchemy import create_engine
-from sqlalchemy.exc import InvalidRequestError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm.session import Session
-
 from user import Base, User
+from sqlalchemy.exc import InvalidRequestError
+from sqlalchemy.orm.exc import NoResultFound
+
+VALID_FIELDS = ['id', 'email', 'hashed_password', 'session_id',
+                'reset_token']
 
 
 class DB:
-    """DB class
-    """
+    """DB class"""
 
     def __init__(self) -> None:
-        """Initialize a new DB instance
-        """
-        self._engine = create_engine("sqlite:///a.db", echo=True)
+        """Initialize DB class"""
+        self._engine = create_engine("sqlite:///a.db", echo=False)
         Base.metadata.drop_all(self._engine)
         Base.metadata.create_all(self._engine)
         self.__session = None
 
     @property
     def _session(self) -> Session:
-        """Memoized session object
-        """
+        """Memoized session object"""
         if self.__session is None:
             DBSession = sessionmaker(bind=self._engine)
             self.__session = DBSession()
         return self.__session
 
     def add_user(self, email: str, hashed_password: str) -> User:
-        """Add a new user"""
+        """ Add user"""
+        if not email or not hashed_password:
+            return
         user = User(email=email, hashed_password=hashed_password)
         self._session.add(user)
         self._session.commit()
         return user
 
-    def find_user_by(self, **kwargs):
-        """Find a user"""
+    def find_user_by(self, **kwargs) -> User:
+        """ Find user by kwargs"""
+        if not kwargs or not self.valid_query_args(**kwargs):
+            raise InvalidRequestError
         try:
-            user = self._session.query(User).filter_by(**kwargs).first()
-            if user is None:
-                raise NoResultFound("No user found matching the specified criteria.")
-            return user
-        except InvalidRequestError as e:
-            raise InvalidRequestError("Invalid query arguments: " + str(e))
+            return self._session.query(User).filter_by(**kwargs).one()
+        except Exception:
+            raise NoResultFound
 
     def update_user(self, user_id: int, **kwargs) -> None:
-        """Find user record and update attributes"""
-        user_record = self.find_user_by(id=user_id)
-        for key, value in kwargs.items():
-            if hasattr(user_record, key):
-                setattr(user_record, key, value)
-            else:
+        """Update user"""
+        user = self.find_user_by(id=user_id)
+        for k, v in kwargs.items():
+            if k not in VALID_FIELDS:
                 raise ValueError
+            setattr(user, k, v)
         self._session.commit()
-        return None
